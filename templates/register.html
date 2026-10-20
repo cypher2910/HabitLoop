@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up • Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="pt-12 pb-8 space-y-6">
+    <div class="text-center">
+        <h1 class="text-2xl font-extrabold text-white">Get Started</h1>
+        <p class="text-xs text-slate-400 mt-1">Set up your profile to start tracking daily routines</p>
+    </div>
+
+    <form method="POST" class="bg-iosCard border border-iosBorder rounded-3xl p-5 space-y-3.5 shadow-xl">
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Full Name</label>
+            <input type="text" name="name" required placeholder="Alex"
+                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
+        </div>
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Email</label>
+            <input type="email" name="email" required placeholder="name@example.com"
+                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
+        </div>
+        <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Password</label>
+            <input type="password" name="password" required placeholder="••••••••"
+                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
+        </div>
+        <button type="submit" class="w-full py-3 rounded-2xl bg-iosBlue font-bold text-sm text-white shadow-md shadow-iosBlue/25 hover:bg-blue-600 transition">
+            Sign Up
+        </button>
+    </form>
+
+    <div class="text-center">
+        <a href="{{ url_for('login') }}" class="text-xs text-slate-400 hover:text-white">Already have an account? <span class="text-iosBlue font-semibold">Sign in</span></a>
+    </div>
+</div>
+{% endblock %}

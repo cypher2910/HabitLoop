@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Progress • Habit Tracker{% endblock %}
+
+{% block content %}
+<div class="space-y-5 pt-3">
+    
+    <div>
+        <p class="text-xs uppercase tracking-wider text-slate-400 font-bold">INSIGHTS</p>
+        <h1 class="text-3xl font-extrabold tracking-tight text-white mt-0.5">Progress</h1>
+    </div>
+
+    <!-- Apple Activity Bar Chart Card -->
+    <div class="bg-iosCard border border-iosBorder rounded-3xl p-5 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-sm font-bold text-white">Daily Consistency</h3>
+                <p class="text-[11px] text-slate-400">Total habits checked off this week</p>
+            </div>
+            <div class="p-2 rounded-xl bg-iosBlue/15 text-iosBlue">
+                <i data-lucide="trending-up" class="w-4 h-4"></i>
+            </div>
+        </div>
+        <div class="h-44">
+            <canvas id="progressChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Summary Habit Metrics List -->
+    <div>
+        <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3">Habit Streaks</h3>
+        <div class="space-y-2.5">
+            {% for s in habit_stats %}
+            <div class="bg-iosCard border border-iosBorder rounded-2xl p-3.5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-iosCardSubtle flex items-center justify-center text-iosOrange font-bold text-xs">
+                        🔥
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white">{{ s.title }}</p>
+                        <p class="text-[10px] text-slate-400">{{ s.total_completed }} total completions</p>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <span class="text-xs font-extrabold text-iosOrange">{{ s.current_streak }}d</span>
+                    <p class="text-[9px] text-slate-500 uppercase tracking-tighter font-semibold">Streak</p>
+                </div>
+            </div>
+            {% else %}
+            <p class="text-xs text-slate-500 text-center py-6">No progress logs recorded yet.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+const ctx = document.getElementById('progressChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ labels|tojson }},
+        datasets: [{
+            data: {{ counts|tojson }},
+            backgroundColor: '#0a84ff',
+            borderRadius: 8,
+            borderSkipped: false,
+            barThickness: 16
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#64748b', stepSize: 1, font: { size: 10 } }
+            },
+            x: {
+                grid: { display: false },
+                ticks: { color: '#64748b', font: { size: 10 } }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}
