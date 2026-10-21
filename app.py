@@ -1,23 +1,45 @@
 import sqlite3
+import os
+import secrets
 from datetime import datetime, date, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "habitloop_secure_secret_key"
-DB_NAME = "habitloop.db"
+# For local college demos, generate a new key each run so old browser sessions
+# are invalidated when the Flask server is restarted. Set HABITLOOP_SECRET_KEY
+# to a stable secret if you later deploy this app for real users.
+app.secret_key = os.environ.get("HABITLOOP_SECRET_KEY") or secrets.token_hex(32)
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+@app.after_request
+def prevent_auth_page_caching(response):
+    # Avoid restoring login/register pages with stale form values from browser cache.
+    if request.endpoint in {"login", "register", "logout"}:
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BASE_DIR, "habitloop.db")
 
 
 def get_db():
-    conn = sqlite3.connect(DB_NAME)
+    # A longer timeout helps when two requests briefly access SQLite together.
+    conn = sqlite3.connect(DB_NAME, timeout=30)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA busy_timeout = 30000;")
     return conn
 
 
 def init_db():
     conn = get_db()
+    # WAL mode allows readers and a writer to coexist more reliably for this local app.
+    conn.execute("PRAGMA journal_mode = WAL;")
     cursor = conn.cursor()
     cursor.executescript("""
         CREATE TABLE IF NOT EXISTS User (
@@ -275,13 +297,42 @@ def dashboard():
     """, (today_str, session["user_id"])).fetchall()
 
     notifications = conn.execute("""
-        SELECT * FROM Notification 
+        SELECT * FROM Notification
         WHERE user_id = ? AND status = 'unread'
         ORDER BY reminder_time DESC LIMIT 5
     """, (session["user_id"],)).fetchall()
 
+    total_habits = len(habits)
+    completed_today = sum(1 for h in habits if h["completed_today"])
+    completion_percent = round((completed_today / total_habits) * 100) if total_habits else 0
+    best_streak = max((h["longest_streak"] for h in habits), default=0)
+
+    # Explainable, data-driven coaching (rule-based, not a trained ML model).
+    coach_tips = []
+    for h in habits:
+        recent = conn.execute("""
+            SELECT COUNT(*) AS completed
+            FROM HabitLog
+            WHERE habit_id = ? AND user_id = ? AND status = 1
+              AND completion_date >= ? AND completion_date <= ?
+        """, (h["habit_id"], session["user_id"],
+              (date.today() - timedelta(days=6)).strftime("%Y-%m-%d"), today_str)).fetchone()["completed"]
+        if h["completed_today"]:
+            coach_tips.append({"title": h["title"], "kind": "success",
+                               "message": f"Great work — you completed this habit today. Keep the routine going!"})
+        elif recent <= 2:
+            coach_tips.append({"title": h["title"], "kind": "focus",
+                               "message": f"This habit was completed {recent} time(s) in the last 7 days. Try a smaller 2-minute version today."})
+        else:
+            coach_tips.append({"title": h["title"], "kind": "tip",
+                               "message": f"You completed this {recent} time(s) in the last 7 days. Pick a consistent time to make it easier to repeat."})
+    coach_tips = coach_tips[:3]
+
     conn.close()
-    return render_template("dashboard.html", habits=habits, notifications=notifications, today=today_str)
+    return render_template("dashboard.html", habits=habits, notifications=notifications,
+                           today=today_str, total_habits=total_habits,
+                           completed_today=completed_today, completion_percent=completion_percent,
+                           best_streak=best_streak, coach_tips=coach_tips)
 
 
 @app.route("/habits/create", methods=["GET", "POST"])
@@ -294,25 +345,32 @@ def create_habit():
         start_date = request.form.get("start_date") or date.today().strftime("%Y-%m-%d")
         reminder_time = request.form.get("reminder_time") or "08:00"
 
+        if not title:
+            flash("Please enter a habit name.", "danger")
+            return redirect(url_for("create_habit"))
+
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO Habit (user_id, title, description, frequency, start_date, reminder_time)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (session["user_id"], title, description, frequency, start_date, reminder_time))
-        
-        habit_id = cursor.lastrowid
-        # Initialize Streak
-        cursor.execute("INSERT INTO Streak (habit_id, current_streak, longest_streak) VALUES (?, 0, 0)", (habit_id,))
-
-        # Schedule starter notification
-        cursor.execute("""
-            INSERT INTO Notification (user_id, habit_id, message)
-            VALUES (?, ?, ?)
-        """, (session["user_id"], habit_id, f"Reminder set for habit: {title} at {reminder_time}"))
-
-        conn.commit()
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO Habit (user_id, title, description, frequency, start_date, reminder_time)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (session["user_id"], title, description, frequency, start_date, reminder_time))
+            habit_id = cursor.lastrowid
+            cursor.execute("INSERT INTO Streak (habit_id, current_streak, longest_streak) VALUES (?, 0, 0)", (habit_id,))
+            cursor.execute("""
+                INSERT INTO Notification (user_id, habit_id, message)
+                VALUES (?, ?, ?)
+            """, (session["user_id"], habit_id, f"Reminder set for habit: {title} at {reminder_time}"))
+            conn.commit()
+        except sqlite3.OperationalError as exc:
+            conn.rollback()
+            if "locked" in str(exc).lower():
+                flash("The database is busy. Please wait a moment and try again.", "warning")
+                return redirect(url_for("create_habit"))
+            raise
+        finally:
+            conn.close()
         flash("Habit created successfully!", "success")
         return redirect(url_for("dashboard"))
 
@@ -419,4 +477,4 @@ def admin_dashboard():
 
 if __name__ == "__main__":
     init_db()
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=5000, debug=False, threaded=True, use_reloader=False)

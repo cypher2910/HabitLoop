@@ -11,10 +11,64 @@
                 <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> {{ today }}
             </p>
         </div>
-        <a href="{{ url_for('create_habit') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
-            <i data-lucide="plus" class="w-4 h-4"></i> Add New Habit
-        </a>
+        <div class="flex flex-wrap items-center gap-2">
+            <button id="enable-reminders" type="button" onclick="enableHabitReminders()" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition">
+                <i data-lucide="bell-ring" class="w-4 h-4"></i> Enable Notifications
+            </button>
+            <a href="{{ url_for('create_habit') }}" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
+                <i data-lucide="plus" class="w-4 h-4"></i> Add New Habit
+            </a>
+        </div>
     </div>
+
+    <!-- At-a-glance progress -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="glass-card rounded-2xl p-4">
+            <p class="text-xs text-slate-400">Today's progress</p>
+            <div class="flex items-end gap-2 mt-2"><span class="text-2xl font-bold text-white">{{ completion_percent }}%</span><span class="text-xs text-slate-400 mb-1">complete</span></div>
+            <div class="w-full h-2 bg-slate-800 rounded-full mt-3 overflow-hidden"><div class="h-full bg-indigo-500 rounded-full transition-all" style="width: {{ completion_percent }}%"></div></div>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+            <p class="text-xs text-slate-400">Completed today</p>
+            <p class="text-2xl font-bold text-emerald-300 mt-2">{{ completed_today }}<span class="text-sm text-slate-500 font-medium"> / {{ total_habits }}</span></p>
+            <p class="text-xs text-slate-500 mt-2">habits checked off</p>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+            <p class="text-xs text-slate-400">Personal best</p>
+            <p class="text-2xl font-bold text-amber-300 mt-2">{{ best_streak }} <span class="text-sm font-medium">days</span></p>
+            <p class="text-xs text-slate-500 mt-2">longest habit streak</p>
+        </div>
+        <div class="glass-card rounded-2xl p-4">
+            <p class="text-xs text-slate-400">Your focus</p>
+            <p class="text-lg font-bold text-indigo-300 mt-2">Small steps</p>
+            <p class="text-xs text-slate-500 mt-2">Consistency beats perfection</p>
+        </div>
+    </div>
+
+    <!-- Personalized habit coach -->
+    <section class="glass-card rounded-2xl p-5 border border-indigo-500/20">
+        <div class="flex items-start gap-3">
+            <div class="p-2 rounded-xl bg-indigo-500/15 text-indigo-300"><i data-lucide="brain-circuit" class="w-5 h-5"></i></div>
+            <div class="flex-1">
+                <h2 class="text-base font-semibold text-white">Smart Habit Coach</h2>
+                <p class="text-xs text-slate-400 mt-1">Suggestions based on your recent completion history</p>
+            </div>
+            <span class="text-[10px] uppercase tracking-wide px-2 py-1 rounded-full bg-slate-800 text-slate-400">Personalized insights</span>
+        </div>
+        {% if coach_tips %}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+            {% for tip in coach_tips %}
+            <div class="rounded-xl p-3 border {% if tip.kind == 'success' %}border-emerald-500/20 bg-emerald-500/5{% elif tip.kind == 'focus' %}border-amber-500/20 bg-amber-500/5{% else %}border-indigo-500/20 bg-indigo-500/5{% endif %}">
+                <p class="text-sm font-semibold text-slate-200">{{ tip.title }}</p>
+                <p class="text-xs leading-relaxed text-slate-400 mt-1.5">{{ tip.message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-sm text-slate-400 mt-4">Add your first habit to receive personalized suggestions here.</p>
+        {% endif %}
+        <p class="text-[10px] text-slate-500 mt-3">Insights use your logged activity and simple recommendation rules; they are not medical advice or a trained machine-learning prediction.</p>
+    </section>
 
     <!-- Active Reminders -->
     {% if notifications %}
@@ -37,7 +91,7 @@
     <!-- Habits Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {% for h in habits %}
-        <div id="habit-card-{{ h.habit_id }}" class="glass-card rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition relative group">
+        <div id="habit-card-{{ h.habit_id }}" data-habit-id="{{ h.habit_id }}" data-habit-title="{{ h.title|e }}" data-reminder-time="{{ (h.reminder_time or '')|e }}" data-completed-today="{{ 1 if h.completed_today else 0 }}" class="habit-reminder-card glass-card rounded-2xl p-5 flex flex-col justify-between hover:border-slate-700 transition relative group">
             <div class="flex items-start justify-between gap-3">
                 <div>
                     <div class="flex items-center gap-2">
@@ -139,5 +193,66 @@ function toggleHabit(habitId) {
     })
     .finally(() => btn.disabled = false);
 }
+
+// Browser reminders work while this dashboard is open. Browser permission is required.
+const reminderStoragePrefix = 'habitloop-reminded-';
+
+async function enableHabitReminders() {
+    if (!("Notification" in window)) {
+        alert("This browser does not support desktop notifications. Keep HabitLoop open and use the on-page reminders.");
+        return;
+    }
+    try {
+        const permission = await Notification.requestPermission();
+        const button = document.getElementById('enable-reminders');
+        if (permission === 'granted') {
+            button.innerHTML = '<i data-lucide="bell-ring" class="w-4 h-4"></i> Notifications Enabled';
+            lucide.createIcons();
+            showReminderToast('HabitLoop reminders are enabled. Keep this dashboard open at your reminder time.');
+            checkHabitReminders();
+        } else {
+            showReminderToast('Notifications were blocked. Allow notifications for this site in your browser settings.');
+        }
+    } catch (err) {
+        showReminderToast('Could not enable notifications. Check your browser permissions.');
+    }
+}
+
+function showReminderToast(message) {
+    let toast = document.getElementById('habit-reminder-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'habit-reminder-toast';
+        toast.className = 'fixed bottom-20 md:bottom-6 right-4 z-[100] max-w-sm rounded-xl border border-indigo-400/30 bg-slate-900 px-4 py-3 text-sm text-white shadow-2xl';
+        toast.setAttribute('role', 'status');
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.display = 'block';
+    window.setTimeout(() => { if (toast) toast.style.display = 'none'; }, 7000);
+}
+
+function checkHabitReminders() {
+    const now = new Date();
+    const hhmm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    const today = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+    document.querySelectorAll('.habit-reminder-card').forEach(card => {
+        const reminderTime = (card.dataset.reminderTime || '').slice(0, 5);
+        if (!reminderTime || reminderTime !== hhmm || card.dataset.completedToday === '1') return;
+        const key = reminderStoragePrefix + today + '-' + card.dataset.habitId + '-' + reminderTime;
+        if (localStorage.getItem(key)) return;
+        localStorage.setItem(key, 'shown');
+        const title = card.dataset.habitTitle || 'Your habit';
+        const message = 'It is time for: ' + title;
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('HabitLoop reminder', { body: message, tag: key });
+        }
+        showReminderToast(message);
+    });
+}
+
+// Check immediately, then every 15 seconds so a small delay does not miss the selected minute.
+checkHabitReminders();
+window.setInterval(checkHabitReminders, 15000);
 </script>
 {% endblock %}
