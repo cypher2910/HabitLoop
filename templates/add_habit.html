@@ -1,80 +1,57 @@
 {% extends 'base.html' %}
-{% block title %}New Habit • Habit Tracker{% endblock %}
+{% block title %}New Habit | HabitLoop{% endblock %}
 
 {% block content %}
-<div class="pt-4 space-y-5">
-    
-    <!-- Top Action Row -->
-    <div class="flex items-center justify-between pb-2 border-b border-iosBorder">
-        <a href="{{ url_for('dashboard') }}" class="text-sm font-semibold text-iosBlue">Cancel</a>
-        <h2 class="text-base font-bold text-white">New Habit</h2>
-        <span class="w-12"></span>
+<div class="max-w-xl mx-auto">
+    <div class="mb-6">
+        <a href="{{ url_for('dashboard') }}" class="text-xs font-medium text-slate-400 hover:text-slate-200 inline-flex items-center gap-1 mb-2">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Dashboard
+        </a>
+        <h1 class="text-2xl font-bold text-white">Create a New Habit</h1>
+        <p class="text-xs text-slate-400 mt-1">Consistency begins with small, repeatable actions.</p>
     </div>
 
-    <!-- Color Presets inspired by iOS Habit Categories -->
-    <div>
-        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Category Presets</label>
-        <div class="grid grid-cols-4 gap-2">
-            <button type="button" onclick="setPreset('Hydration', 'Drink 8 glasses of water', '08:00')" class="bg-iosCard border border-iosBorder p-3 rounded-2xl flex flex-col items-center gap-1.5 hover:border-iosBlue transition text-center">
-                <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-iosGreen flex items-center justify-center">
-                    <i data-lucide="droplet" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-200">Water</span>
-            </button>
-            <button type="button" onclick="setPreset('Workout', '30 min active cardio or gym', '07:00')" class="bg-iosCard border border-iosBorder p-3 rounded-2xl flex flex-col items-center gap-1.5 hover:border-iosOrange transition text-center">
-                <div class="w-8 h-8 rounded-full bg-iosOrange/20 text-iosOrange flex items-center justify-center">
-                    <i data-lucide="dumbbell" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-200">Fitness</span>
-            </button>
-            <button type="button" onclick="setPreset('Reading', 'Read 20 pages before bed', '22:00')" class="bg-iosCard border border-iosBorder p-3 rounded-2xl flex flex-col items-center gap-1.5 hover:border-iosPurple transition text-center">
-                <div class="w-8 h-8 rounded-full bg-iosPurple/20 text-iosPurple flex items-center justify-center">
-                    <i data-lucide="book" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-200">Read</span>
-            </button>
-            <button type="button" onclick="setPreset('Meditation', 'Mindful breathing practice', '06:30')" class="bg-iosCard border border-iosBorder p-3 rounded-2xl flex flex-col items-center gap-1.5 hover:border-iosBlue transition text-center">
-                <div class="w-8 h-8 rounded-full bg-iosBlue/20 text-iosBlue flex items-center justify-center">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                </div>
-                <span class="text-[10px] font-bold text-slate-200">Mind</span>
-            </button>
+    <!-- Quick Presets -->
+    <div class="mb-6">
+        <p class="text-xs font-medium text-slate-400 mb-2">Quick Presets:</p>
+        <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="setPreset('Drink 2L Water', 'Stay hydrated throughout the day', '08:00')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300">💧 Hydration</button>
+            <button type="button" onclick="setPreset('30 Min Workout', 'Gym, run, or bodyweight circuit', '07:00')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300">💪 Fitness</button>
+            <button type="button" onclick="setPreset('Read 15 Pages', 'Fiction or personal development', '21:30')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300">📚 Reading</button>
+            <button type="button" onclick="setPreset('10 Mins Meditation', 'Breathing exercises for calm focus', '06:30')" class="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300">🧘 Meditation</button>
         </div>
     </div>
 
-    <!-- Habit Form Card -->
-    <form method="POST" class="space-y-4">
-        <div class="bg-iosCard border border-iosBorder rounded-3xl p-4 space-y-3.5">
-            <div>
-                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Title</label>
-                <input type="text" id="habit_title" name="title" required placeholder="e.g. Read Book" 
-                       class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-            </div>
+    <form method="POST" class="glass-card rounded-2xl p-6 space-y-5 border border-slate-800">
+        <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Habit Title</label>
+            <input type="text" id="habit_title" name="title" required placeholder="e.g., Morning Jog" 
+                   class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+        </div>
 
-            <div>
-                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Motivation / Notes</label>
-                <input type="text" id="habit_desc" name="description" placeholder="Short description" 
-                       class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-            </div>
+        <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Description (Optional)</label>
+            <textarea id="habit_desc" name="description" rows="2" placeholder="Why do you want to keep this habit?" 
+                      class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+        </div>
 
-            <div class="grid grid-cols-2 gap-3 pt-1">
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Frequency</label>
-                    <select name="frequency" class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-iosBlue">
-                        <option value="Daily">Daily</option>
-                        <option value="Weekly">Weekly</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-slate-400 mb-1">Reminder</label>
-                    <input type="time" id="habit_time" name="reminder_time" value="08:00" 
-                           class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-iosBlue">
-                </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1.5">Frequency</label>
+                <select name="frequency" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="Daily">Daily</option>
+                    <option value="Weekly">Weekly</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1.5">Daily Reminder Time</label>
+                <input type="time" id="habit_time" name="reminder_time" value="08:00" 
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
         </div>
 
-        <button type="submit" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-iosBlue to-iosPurple font-bold text-sm text-white shadow-lg shadow-iosBlue/25 hover:opacity-95 transition">
-            Create Habit
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
+            Save Habit
         </button>
     </form>
 </div>

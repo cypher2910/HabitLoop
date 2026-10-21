@@ -170,6 +170,8 @@ def index():
     return redirect(url_for("login"))
 
 
+import re  # Agar pehle se nahi hai toh top par import karein
+
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
@@ -177,6 +179,33 @@ def register():
         email = request.form["email"].strip().lower()
         password = request.form["password"]
 
+        # 1. Email Format Validation (.com / extension check)
+        email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if not re.match(email_pattern, email):
+            flash("Please enter a valid email address (e.g., name@example.com).", "danger")
+            return redirect(url_for("register"))
+
+        # 2. Minimum Length Check (High Security)
+        if len(password) < 8:
+            flash("Password must be at least 8 characters long.", "danger")
+            return redirect(url_for("register"))
+        
+        # 3. Lowercase (Small letter) Check
+        elif not any(c.islower() for c in password):
+            flash("Password must contain at least one lowercase letter (a-z).", "danger")
+            return redirect(url_for("register"))
+        
+        # 4. Uppercase (Capital letter) Check
+        elif not any(c.isupper() for c in password):
+            flash("Password must contain at least one uppercase letter (A-Z).", "danger")
+            return redirect(url_for("register"))
+        
+        # 5. Special Character Check
+        elif not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+            flash("Password must contain at least one special character (e.g. @, #, $, !).", "danger")
+            return redirect(url_for("register"))
+
+        # Agar saare checks pass ho jayein, tab database me save hoga
         conn = get_db()
         try:
             hashed_pwd = generate_password_hash(password)
@@ -193,7 +222,6 @@ def register():
             conn.close()
 
     return render_template("register.html")
-
 
 @app.route("/login", methods=["GET", "POST"])
 def login():

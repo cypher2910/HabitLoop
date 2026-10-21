@@ -1,11 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>{% block title %}Habit Tracker{% endblock %}</title>
-    <!-- Tailwind CSS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HabitLoop - Build Better Routines{% endblock %}</title>
+    <!-- Tailwind CSS CDN & Inter Font -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Chart.js -->
@@ -14,97 +17,100 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', 'Inter', 'sans-serif']
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
-                        iosBg: '#090a0f',
-                        iosCard: '#151722',
-                        iosCardSubtle: '#1d2030',
-                        iosBorder: 'rgba(255, 255, 255, 0.08)',
-                        iosGreen: '#30d158',
-                        iosOrange: '#ff9f0a',
-                        iosPurple: '#bf5af2',
-                        iosBlue: '#0a84ff',
-                        iosPink: '#ff375f'
+                        brand: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' }
                     }
                 }
             }
         }
     </script>
     <style>
-        body {
-            background-color: #090a0f;
-            color: #f5f5f7;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .progress-ring__circle {
-            transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: rotate(-90deg);
-            transform-origin: 50% 50%;
-        }
-        .ios-blur {
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
     </style>
 </head>
-<body class="h-full flex flex-col justify-between selection:bg-iosBlue selection:text-white">
+<body class="min-h-screen flex flex-col justify-between pb-16 md:pb-0">
 
-    <!-- Responsive Container mimicking iOS App Shell -->
-    <div class="w-full max-w-md mx-auto min-h-screen flex flex-col bg-iosBg border-x border-iosBorder relative pb-24 shadow-2xl">
-        
-        <!-- Flash Alert Messages -->
-        <div class="px-5 pt-4">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="space-y-2 mb-3">
-                    {% for category, message in messages %}
-                        <div class="p-3 rounded-2xl text-xs font-semibold flex items-center gap-2 border
-                            {% if category == 'danger' %} bg-iosPink/10 text-iosPink border-iosPink/30
-                            {% elif category == 'success' %} bg-iosGreen/10 text-iosGreen border-iosGreen/30
-                            {% else %} bg-iosBlue/10 text-iosBlue border-iosBlue/30 {% endif %}">
+    <!-- Top Navigation -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 text-indigo-400 font-bold text-lg tracking-tight">
+                <i data-lucide="repeat" class="w-6 h-6"></i>
+                <span class="text-white">Habit<span class="text-indigo-400">Loop</span></span>
+            </a>
+
+            <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
+                {% if session.get('user_id') %}
+                    {% if session.get('is_admin') %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="text-amber-400 hover:text-amber-300 flex items-center gap-1.5 transition">
+                            <i data-lucide="shield" class="w-4 h-4"></i> Admin
+                        </a>
+                    {% endif %}
+                    <a href="{{ url_for('dashboard') }}" class="text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                        <i data-lucide="layout-grid" class="w-4 h-4"></i> Dashboard
+                    </a>
+                    <a href="{{ url_for('progress') }}" class="text-slate-300 hover:text-white flex items-center gap-1.5 transition">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"></i> Analytics
+                    </a>
+                    <div class="h-4 w-px bg-slate-800"></div>
+                    <span class="text-xs text-slate-400">{{ session.get('name') }}</span>
+                    <a href="{{ url_for('logout') }}" class="text-rose-400 hover:text-rose-300 text-xs px-3 py-1.5 rounded-lg border border-rose-500/20 hover:bg-rose-500/10 transition">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="text-slate-300 hover:text-white transition">Sign In</a>
+                    <a href="{{ url_for('register') }}" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm transition shadow-sm shadow-indigo-500/20">Get Started</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Flash Messages Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 w-full flex-1">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="space-y-3 mb-6">
+                {% for category, message in messages %}
+                    <div class="flex items-center justify-between p-4 rounded-xl border text-sm font-medium
+                        {% if category == 'danger' %} bg-rose-950/40 border-rose-800/50 text-rose-300
+                        {% elif category == 'success' %} bg-emerald-950/40 border-emerald-800/50 text-emerald-300
+                        {% elif category == 'warning' %} bg-amber-950/40 border-amber-800/50 text-amber-300
+                        {% else %} bg-indigo-950/40 border-indigo-800/50 text-indigo-300 {% endif %}">
+                        <div class="flex items-center gap-2">
                             <i data-lucide="info" class="w-4 h-4"></i>
                             <span>{{ message }}</span>
                         </div>
-                    {% endfor %}
                     </div>
-                {% endif %}
-            {% endwith %}
-        </div>
-
-        <!-- Dynamic View -->
-        <main class="flex-1 px-5">
-            {% block content %}{% endblock %}
-        </main>
-
-        <!-- Native iOS Bottom Navigation Bar -->
-        {% if session.get('user_id') %}
-        <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-iosBg/85 ios-blur border-t border-iosBorder px-6 py-2 flex justify-between items-center z-50">
-            <a href="{{ url_for('dashboard') }}" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
-                <i data-lucide="calendar" class="w-5 h-5 text-iosBlue"></i>
-                <span class="text-[10px] font-medium text-slate-300">Habits</span>
-            </a>
-            <a href="{{ url_for('progress') }}" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
-                <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-                <span class="text-[10px] font-medium text-slate-400">Progress</span>
-            </a>
-            <a href="{{ url_for('create_habit') }}" class="relative -top-4 flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-iosBlue to-iosPurple shadow-lg shadow-iosBlue/30 text-white">
-                <i data-lucide="plus" class="w-6 h-6 stroke-[2.5]"></i>
-            </a>
-            {% if session.get('is_admin') %}
-            <a href="{{ url_for('admin_dashboard') }}" class="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition">
-                <i data-lucide="shield" class="w-5 h-5 text-iosOrange"></i>
-                <span class="text-[10px] font-medium text-slate-400">Admin</span>
-            </a>
+                {% endfor %}
+                </div>
             {% endif %}
-            <a href="{{ url_for('logout') }}" class="flex flex-col items-center gap-1 text-slate-400 hover:text-iosPink transition">
-                <i data-lucide="log-out" class="w-5 h-5"></i>
-                <span class="text-[10px] font-medium text-slate-400">Exit</span>
-            </a>
-        </nav>
-        {% endif %}
-    </div>
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar (Phone layout) -->
+    {% if session.get('user_id') %}
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-900/95 backdrop-blur z-50 px-6 py-2 flex justify-around">
+        <a href="{{ url_for('dashboard') }}" class="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-400 text-xs">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            <span>Today</span>
+        </a>
+        <a href="{{ url_for('create_habit') }}" class="flex flex-col items-center gap-1 text-indigo-400 text-xs -mt-5">
+            <div class="bg-indigo-600 p-2.5 rounded-full text-white shadow-lg shadow-indigo-600/30">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+            </div>
+            <span>New</span>
+        </a>
+        <a href="{{ url_for('progress') }}" class="flex flex-col items-center gap-1 text-slate-400 hover:text-indigo-400 text-xs">
+            <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
+            <span>Stats</span>
+        </a>
+    </nav>
+    {% endif %}
 
     <script>
         lucide.createIcons();

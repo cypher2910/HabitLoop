@@ -1,34 +1,36 @@
 {% extends 'base.html' %}
-{% block title %}Sign In • Habit Tracker{% endblock %}
+{% block title %}Sign In | HabitLoop{% endblock %}
 
 {% block content %}
-<div class="pt-16 pb-8 space-y-6">
-    <div class="text-center">
-        <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-iosBlue to-iosPurple flex items-center justify-center mx-auto shadow-xl shadow-iosBlue/20 text-white mb-4">
-            <i data-lucide="repeat" class="w-8 h-8 stroke-[2.5]"></i>
+<div class="max-w-md mx-auto py-12">
+    <div class="glass-card rounded-2xl p-8 border border-slate-800">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-white tracking-tight">Welcome Back</h1>
+            <p class="text-xs text-slate-400 mt-1">Sign in to your HabitLoop account</p>
         </div>
-        <h1 class="text-2xl font-extrabold text-white">HabitLoop</h1>
-        <p class="text-xs text-slate-400 mt-1">Consistent small changes lead to remarkable results</p>
-    </div>
 
-    <form method="POST" class="bg-iosCard border border-iosBorder rounded-3xl p-5 space-y-3.5 shadow-xl">
-        <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Email</label>
-            <input type="email" name="email" required placeholder="name@example.com"
-                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-        </div>
-        <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Password</label>
-            <input type="password" name="password" required placeholder="••••••••"
-                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-        </div>
-        <button type="submit" class="w-full py-3 rounded-2xl bg-iosBlue font-bold text-sm text-white shadow-md shadow-iosBlue/25 hover:bg-blue-600 transition">
-            Continue
-        </button>
-    </form>
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+                <input type="email" name="email" required placeholder="name@example.com"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
 
-    <div class="text-center">
-        <a href="{{ url_for('register') }}" class="text-xs text-slate-400 hover:text-white">New user? <span class="text-iosBlue font-semibold">Create an account</span></a>
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+                <input type="password" name="password" required placeholder="••••••••"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
+                Sign In
+            </button>
+        </form>
+
+        <div class="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-400">
+            Don't have an account? 
+            <a href="{{ url_for('register') }}" class="text-indigo-400 hover:text-indigo-300 font-semibold ml-1">Create Account</a>
+        </div>
     </div>
 </div>
 {% endblock %}

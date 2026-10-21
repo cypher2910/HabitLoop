@@ -1,36 +1,60 @@
 {% extends 'base.html' %}
-{% block title %}Sign Up • Habit Tracker{% endblock %}
+{% block title %}Create Account | HabitLoop{% endblock %}
 
 {% block content %}
-<div class="pt-12 pb-8 space-y-6">
-    <div class="text-center">
-        <h1 class="text-2xl font-extrabold text-white">Get Started</h1>
-        <p class="text-xs text-slate-400 mt-1">Set up your profile to start tracking daily routines</p>
-    </div>
+<div class="max-w-md mx-auto py-12">
+    <div class="glass-card rounded-2xl p-8 border border-slate-800">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-white tracking-tight">Start Your Loop</h1>
+            <p class="text-xs text-slate-400 mt-1">Set up your profile to begin habit tracking</p>
+        </div>
 
-    <form method="POST" class="bg-iosCard border border-iosBorder rounded-3xl p-5 space-y-3.5 shadow-xl">
-        <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Full Name</label>
-            <input type="text" name="name" required placeholder="Alex"
-                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-        </div>
-        <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Email</label>
-            <input type="email" name="email" required placeholder="name@example.com"
-                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-        </div>
-        <div>
-            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Password</label>
-            <input type="password" name="password" required placeholder="••••••••"
-                   class="w-full bg-iosCardSubtle border border-iosBorder rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-iosBlue">
-        </div>
-        <button type="submit" class="w-full py-3 rounded-2xl bg-iosBlue font-bold text-sm text-white shadow-md shadow-iosBlue/25 hover:bg-blue-600 transition">
-            Sign Up
-        </button>
-    </form>
+        <!-- Flash Messages Display Section -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-4 space-y-2">
+                    {% for category, message in messages %}
+                        <div class="p-3 rounded-xl text-xs {% if category == 'error' %}bg-red-900/50 border border-red-700 text-red-200{% else %}bg-emerald-900/50 border border-emerald-700 text-emerald-200{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-    <div class="text-center">
-        <a href="{{ url_for('login') }}" class="text-xs text-slate-400 hover:text-white">Already have an account? <span class="text-iosBlue font-semibold">Sign in</span></a>
+        <form method="POST" class="space-y-4">
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Full Name</label>
+                <input type="text" name="name" required placeholder="Alex Turner"
+                       class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Email Address</label>
+                <!-- pattern attribute add kiya gaya hai -->
+                <input type="email" name="email" required 
+                    pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$"
+                    placeholder="name@example.com"
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+                <input type="password" name="password" required minlength="8" 
+                        placeholder="At least 8 chars (Aa@1)"
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <p class="text-[10px] text-slate-500 mt-1">Must include uppercase, lowercase, and a special character.</p>
+            </div>
+
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow-lg shadow-indigo-600/20">
+                Register
+            </button>
+        </form>
+
+        <div class="mt-6 pt-6 border-t border-slate-800 text-center text-xs text-slate-400">
+            Already registered? 
+            <a href="{{ url_for('login') }}" class="text-indigo-400 hover:text-indigo-300 font-semibold ml-1">Sign In</a>
+        </div>
     </div>
 </div>
 {% endblock %}
